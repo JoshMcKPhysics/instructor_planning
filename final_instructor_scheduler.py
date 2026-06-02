@@ -1,4 +1,12 @@
 
+import subprocess
+import sys
+    
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+install('streamlit_extras')
+
 import calendar
 import json
 from pathlib import Path
@@ -6,6 +14,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import streamlit as st
+
+
 from streamlit_extras.stylable_container import stylable_container
 
 # ---------- CONFIG ----------

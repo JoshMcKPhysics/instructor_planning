@@ -341,7 +341,8 @@ with st.expander("Assignments"):
             use_container_width=True
         )
 
-st.button('Save', on_click=save_to_db())
+if st.button('Save'):
+    save_to_db()
 
 st.caption(
     "Selected instructors appear first. "

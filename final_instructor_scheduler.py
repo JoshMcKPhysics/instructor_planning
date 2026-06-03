@@ -6,11 +6,17 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import streamlit as st
+from supabase import create_client
 
 
 from streamlit_extras.stylable_container import stylable_container
 
 # ---------- CONFIG ----------
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
+)
+
 
 #DATA_FILE = "instructor_planning.pkl"  # rename your uploaded file to this
 #STATE_FILE = "schedule_selections.json"
@@ -43,6 +49,25 @@ def load_state():
 
 def save_state():
     Path(STATE_FILE).write_text(json.dumps(st.session_state.selected))
+
+def format_for_save():
+    return [
+        {
+            'Date': k.split('|')[0],
+            'Name': k.split('|')[1],
+            'Active': v
+        }
+        for k, v in st.session_state.selected.items()
+    ]
+
+
+def save_to_db():
+    (
+        supabase
+        .table('schedule_state')
+        .upsert(format_for_save())
+        .execute()
+    )
 
 #if "selected" not in st.session_state:
 if not hasattr(st.session_state, 'selected'):
@@ -310,6 +335,8 @@ with st.expander("Assignments"):
             ),
             use_container_width=True
         )
+
+st.button('Save', on_click=save_to_db)
 
 st.caption(
     "Selected instructors appear first. "

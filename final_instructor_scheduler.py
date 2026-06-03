@@ -65,7 +65,7 @@ def assignment_hours(dt):
 
 def week_key(dt):
     iso = pd.Timestamp(dt).isocalendar()
-    return f"{iso.year}-{iso.week}"
+    return f"{iso.year}-{iso.week + (iso.weekday == 7)}"
 
 def weekly_hours(name, day):
     wk = week_key(day)

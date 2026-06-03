@@ -49,7 +49,7 @@ if not hasattr(st.session_state, 'selected'):
     st.session_state.selected = load_state()
 
 # ---------- RULES ----------
-
+# test
 def assignment_hours(dt):
     dt = pd.Timestamp(dt)
     

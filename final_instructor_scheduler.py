@@ -44,16 +44,17 @@ def load_state():
 def save_state():
     Path(STATE_FILE).write_text(json.dumps(st.session_state.selected))
 
-if "selected" not in st.session_state:
+#if "selected" not in st.session_state:
+if not hasattr(st.session_state, 'selected'):
     st.session_state.selected = load_state()
 
 # ---------- RULES ----------
 
 def assignment_hours(dt):
     dt = pd.Timestamp(dt)
-
+    
     # Mon-Thu = 4 hours
-    if dt.dayofweek <= 3:
+    if dt.dayofweek:
         return 4
 
     # Sat-Sun = 3 hours

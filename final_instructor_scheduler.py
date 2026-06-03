@@ -65,9 +65,14 @@ def save_to_db():
     (
         supabase
         .table('schedule_state')
-        .upsert(format_for_save())
+    #    .upsert(format_for_save())
+        .upsert({
+            'id': 'current_state',
+            'selected': json.dumps(st.session_state.selected)
+        })
         .execute()
     )
+
 
 #if "selected" not in st.session_state:
 if not hasattr(st.session_state, 'selected'):
@@ -336,7 +341,7 @@ with st.expander("Assignments"):
             use_container_width=True
         )
 
-st.button('Save', on_click=save_to_db)
+st.button('Save', on_click=save_to_db())
 
 st.caption(
     "Selected instructors appear first. "

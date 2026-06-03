@@ -17,7 +17,7 @@ from streamlit_extras.stylable_container import stylable_container
 
 BASE_DIR = Path(__file__).parent
 
-STATE_FILE = BASE_DIR / "schedule_selections.json"
+STATE_FILE = BASE_DIR.parent / "schedule_selections.json"
 DATA_FILE = BASE_DIR / "instructor_planning.pkl"
 
 VISIBLE_INSTRUCTORS = 5

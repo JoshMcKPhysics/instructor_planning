@@ -340,7 +340,10 @@ with st.expander("Assignments"):
             use_container_width=True
         )
 
-password = st.sidebar.text_input(
+if st.button('Refresh'):
+    load_from_db()
+
+password = st.text_input(
     "Admin Password",
     type="password"
 )
@@ -351,8 +354,7 @@ if st.button('Save'):
     if is_admin:
         save_to_db()
 
-if st.button('Reset to Last Save'):
-    load_from_db()
+
 
 st.caption(
     "Selected instructors appear first. "

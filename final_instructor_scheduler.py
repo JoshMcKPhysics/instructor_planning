@@ -57,7 +57,7 @@ def load_from_db():
             .table("schedule_state")
             .select("*")
             .execute()
-            .data
+            #.data
         )
     )
 

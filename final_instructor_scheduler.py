@@ -23,7 +23,7 @@ supabase = create_client(
 
 BASE_DIR = Path(__file__).parent
 
-STATE_FILE = BASE_DIR.parent / "schedule_selections.json"
+STATE_FILE = BASE_DIR / "schedule_selections.json"
 DATA_FILE = BASE_DIR / "instructor_planning.pkl"
 
 VISIBLE_INSTRUCTORS = 5
@@ -50,22 +50,19 @@ def load_state():
 def save_state():
     Path(STATE_FILE).write_text(json.dumps(st.session_state.selected))
 
-def format_for_save():
-    return [
-        {
-            'Date': k.split('|')[0],
-            'Name': k.split('|')[1],
-            'Active': v
-        }
-        for k, v in st.session_state.selected.items()
-    ]
-
+def load_from_db():
+    st.session_state.selected = (
+        supabase
+        .table("schedule_state")
+        .select("*")
+        .execute()
+        .data
+    )
 
 def save_to_db():
     (
         supabase
         .table('schedule_state')
-    #    .upsert(format_for_save())
         .insert({
             'id': 'current_state',
             'selected': json.dumps(st.session_state.selected)
@@ -76,7 +73,8 @@ def save_to_db():
 
 #if "selected" not in st.session_state:
 if not hasattr(st.session_state, 'selected'):
-    st.session_state.selected = load_state()
+    #st.session_state.selected = load_state()
+    load_from_db()
 
 # ---------- RULES ----------
 # test
@@ -343,6 +341,9 @@ with st.expander("Assignments"):
 
 if st.button('Save'):
     save_to_db()
+
+if st.button('Reset to Last Save'):
+    load_from_db()
 
 st.caption(
     "Selected instructors appear first. "

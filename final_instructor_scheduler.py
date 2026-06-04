@@ -17,9 +17,8 @@ supabase = create_client(
     st.secrets["SUPABASE_KEY"]
 )
 
-
-#DATA_FILE = "instructor_planning.pkl"  # rename your uploaded file to this
-#STATE_FILE = "schedule_selections.json"
+ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
+JOSH_PASSWORD = st.secrets["JOSH_PASSWORD"]
 
 BASE_DIR = Path(__file__).parent
 
@@ -341,8 +340,16 @@ with st.expander("Assignments"):
             use_container_width=True
         )
 
+password = st.sidebar.text_input(
+    "Admin Password",
+    type="password"
+)
+
+is_admin = password in {ADMIN_PASSWORD, JOSH_PASSWORD}
+
 if st.button('Save'):
-    save_to_db()
+    if is_admin:
+        save_to_db()
 
 if st.button('Reset to Last Save'):
     load_from_db()

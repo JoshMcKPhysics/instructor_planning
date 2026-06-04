@@ -354,7 +354,7 @@ if st.button('Save'):
     if is_admin:
         save_to_db()
     else:
-        st.warning('Enter the scheduler password to make changes.')
+        st.warning('Enter the admin password to make changes.')
 
 
 

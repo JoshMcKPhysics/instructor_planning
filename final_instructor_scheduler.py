@@ -51,14 +51,14 @@ def save_state():
     Path(STATE_FILE).write_text(json.dumps(st.session_state.selected))
 
 def load_from_db():
-    st.session_state.selected = (
+    st.session_state
+    .selected = (
         supabase
         .table("schedule_state")
         .select("*")
         .execute()
         .data
-    )
-    print(st.session_state.selected)
+    )[0]['selected']
 
 def save_to_db():
     (

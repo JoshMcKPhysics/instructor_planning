@@ -56,8 +56,9 @@ def load_from_db():
         .table("schedule_state")
         .select("*")
         .execute()
-        #.data
+        .data
     )
+    print(st.session_state.selected)
 
 def save_to_db():
     (

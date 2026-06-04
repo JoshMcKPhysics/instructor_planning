@@ -52,11 +52,13 @@ def save_state():
 
 def load_from_db():
     st.session_state.selected = (
-        supabase
-        .table("schedule_state")
-        .select("*")
-        .execute()
-        .data
+        json.loads(
+            supabase
+            .table("schedule_state")
+            .select("*")
+            .execute()
+            .data
+        )
     )
 
 def save_to_db():

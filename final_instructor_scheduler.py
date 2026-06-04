@@ -65,7 +65,7 @@ def save_to_db():
     (
         supabase
         .table('schedule_state')
-        .insert({
+        .upsert({
             'id': 'current_state',
             'selected': json.dumps(st.session_state.selected)
         })

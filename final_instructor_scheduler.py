@@ -353,6 +353,7 @@ is_admin = password in {ADMIN_PASSWORD, JOSH_PASSWORD}
 if st.button('Save'):
     if is_admin:
         save_to_db()
+        st.toast('Saved')
     else:
         st.warning('Enter the admin password to make changes.')
 

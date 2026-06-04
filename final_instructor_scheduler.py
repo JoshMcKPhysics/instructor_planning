@@ -342,6 +342,7 @@ with st.expander("Assignments"):
 
 if st.button('Refresh'):
     load_from_db()
+    st.rerun()
 
 password = st.text_input(
     "Admin Password",

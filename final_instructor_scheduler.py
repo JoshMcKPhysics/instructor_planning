@@ -83,7 +83,7 @@ def assignment_hours(dt):
     dt = pd.Timestamp(dt)
     
     # Mon-Thu = 4 hours
-    if dt.dayofweek:
+    if dt.dayofweek < 4:
         return 4
 
     # Sat-Sun = 3 hours
@@ -148,6 +148,9 @@ def tile_css(bg):
 # ---------- TOGGLE ----------
 
 def toggle(day, instructor, max_hours):
+
+    #if not is_admin:
+    #    return
 
     key = f"{day}|{instructor}"
 

@@ -441,51 +441,76 @@ st.caption(
 
 # ---------- ADMIN OVERRIDES ----------
 
-with st.expander("Admin Overrides"):
+if is_admin:
 
-    override_day = st.date_input("Date")
+    with st.expander("Admin Overrides"):
 
-    all_instructors = sorted(
-        df["Name"].unique()
+        override_day = st.date_input(
+            "Date"
+        )
+
+        all_instructors = sorted(
+            df["Name"].unique()
+        )
+
+        assigned = sorted([
+            name
+            for name in all_instructors
+            if st.session_state.selected.get(
+                f"{override_day}|{name}",
+                False
+            )
+        ])
+
+        if not assigned:
+
+            st.info(
+                "No instructors assigned on this date."
+            )
+
+        else:
+
+            old_name = st.selectbox(
+                "Replace instructor",
+                assigned
+            )
+
+            new_name = st.selectbox(
+                "With instructor",
+                all_instructors
+            )
+
+            if st.button(
+                "Swap",
+                key=f"swap_{override_day}"
+            ):
+
+                # extra protection
+                if not is_admin:
+                    st.error(
+                        "Admin access required."
+                    )
+                    st.stop()
+
+                st.session_state.selected.pop(
+                    f"{override_day}|{old_name}",
+                    None
+                )
+
+                st.session_state.selected[
+                    f"{override_day}|{new_name}"
+                ] = True
+
+                st.toast(
+                    f"Replaced {old_name} "
+                    f"with {new_name}"
+                )
+
+                st.rerun()
+
+else:
+
+    st.info(
+        "Enter the admin password to access "
+        "override tools."
     )
-
-    assigned = sorted([
-        name
-        for name in all_instructors
-        if st.session_state.selected.get(
-            f"{override_day}|{name}",
-            False
-        )
-    ])
-
-    if assigned:
-
-        old_name = st.selectbox(
-            "Replace instructor",
-            assigned
-        )
-
-        new_name = st.selectbox(
-            "With instructor",
-            all_instructors
-        )
-
-        if st.button(
-            "Swap",
-            key=f"swap_{override_day}"
-        ):
-
-            st.session_state.selected.pop(
-                f"{override_day}|{old_name}",
-                None
-            )
-
-            st.session_state.selected[
-                f"{override_day}|{new_name}"
-            ] = True
-
-            st.toast(
-                f"Replaced {old_name} with {new_name}"
-            )
-
-            st.rerun()

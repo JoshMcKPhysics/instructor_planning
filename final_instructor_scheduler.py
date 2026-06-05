@@ -390,13 +390,13 @@ with st.expander("Admin Overrides"):
     )
 
     assigned = sorted([
-        name
-        for name in all_instructors
+        name for name in all_instructors
         if st.session_state.selected.get(
             f"{override_day}|{name}",
             True
         )
     ])
+    print(st.session_state.selected)
 
     
 

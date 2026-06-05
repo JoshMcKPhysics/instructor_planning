@@ -374,13 +374,13 @@ st.caption(
 ##############################
 with st.expander("Admin Overrides"):
 
-    override_day = st.date_input("Date"
-                                 )
+    override_day = st.date_input("Date")
+
     assigned = sorted([
         name
         for name in day_rows["Name"].unique()
         if st.session_state.selected.get(
-            f"{day}|{name}",
+            f"{override_day}|{name}",
             True
         )
     ])
@@ -392,26 +392,26 @@ with st.expander("Admin Overrides"):
     old_name = st.selectbox(
         "Replace instructor",
         assigned,
-        key=f"old_{day}"
+        key=f"old_{override_day}"
     )
 
     new_name = st.selectbox(
         "With instructor",
         all_instructors,
-        key=f"new_{day}"
+        key=f"new_{override_day}"
     )
 
     if st.button(
         "Swap",
-        key=f"swap_{day}"
+        key=f"swap_{override_day}"
     ):
 
         st.session_state.selected[
-            f"{day}|{old_name}"
+            f"{override_day}|{old_name}"
         ] = False
 
         st.session_state.selected[
-            f"{day}|{new_name}"
+            f"{override_day}|{new_name}"
         ] = True
 
         save_state()

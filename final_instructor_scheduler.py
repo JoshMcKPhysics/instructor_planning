@@ -425,7 +425,7 @@ with st.expander("Admin Overrides"):
 
         available_names = set(day_rows["Name"])
         
-        del available_names('old_name')
+        del available_names['old_name']
 
         assigned_names = set()
 

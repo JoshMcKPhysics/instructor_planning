@@ -372,9 +372,6 @@ st.caption(
     "is at or above max_hours, further assignments are blocked."
 )
 
-st.caption(
-    str(st.session_state.selected)
-)
 
 ##############################
 with st.expander("Admin Overrides"):
@@ -399,9 +396,6 @@ with st.expander("Admin Overrides"):
         if f'{override_day}|{name}'
         in st.session_state.selected.keys()
     ])
-    
-
-    
 
     old_name = st.selectbox(
         "Replace instructor",
@@ -420,9 +414,9 @@ with st.expander("Admin Overrides"):
         key=f"swap_{override_day}"
     ):
 
-        st.session_state.selected[
+        st.session_state.selected.pop(
             f"{override_day}|{old_name}"
-        ] = False
+        )
 
         st.session_state.selected[
             f"{override_day}|{new_name}"
@@ -434,14 +428,16 @@ with st.expander("Admin Overrides"):
             f"Replaced {old_name} with {new_name}"
         )
 
+        display_names = set(day_rows["Name"])
+
+        for key, selected in st.session_state.selected.items():
+            if selected:
+                d, instructor = key.split("|", 1)
+
+                if str(day) == d:
+                    display_names.add(instructor)
+
         st.rerun()
 
 
-    display_names = set(day_rows["Name"])
-
-    for key, selected in st.session_state.selected.items():
-        if selected:
-            d, instructor = key.split("|", 1)
-
-            if str(day) == d:
-                display_names.add(instructor)
+    

@@ -462,127 +462,82 @@ if is_admin:
             )
         ])
 
-        if not assigned:
+        # =====================
+        # ADD ASSIGNMENT
+        # =====================
 
-            st.info(
-                "No instructors assigned on this date."
+        st.subheader("Add Instructor Assignment")
+
+        add_name = st.selectbox(
+            "Instructor",
+            all_instructors,
+            key=f"add_name_{override_day}"
+        )
+
+        if st.button(
+            "Add Assignment",
+            key=f"add_{override_day}"
+        ):
+
+            assignment_key = (
+                f"{override_day}|{add_name}"
             )
 
-        else:
-
-            old_name = st.selectbox(
-                "Replace instructor",
-                assigned
-            )
-
-            new_name = st.selectbox(
-                "With instructor",
-                all_instructors
-            )
-
-            if st.button(
-                "Swap",
-                key=f"swap_{override_day}"
+            if st.session_state.selected.get(
+                assignment_key,
+                False
             ):
 
-                # extra protection
-                if not is_admin:
-                    st.error(
-                        "Admin access required."
-                    )
-                    st.stop()
-
-                st.session_state.selected.pop(
-                    f"{override_day}|{old_name}",
-                    None
+                st.warning(
+                    f"{add_name} is already assigned."
                 )
 
+            else:
+
                 st.session_state.selected[
-                    f"{override_day}|{new_name}"
+                    assignment_key
                 ] = True
 
                 st.toast(
-                    f"Replaced {old_name} "
-                    f"with {new_name}"
+                    f"Added {add_name}"
                 )
 
                 st.rerun()
 
-else:
+        st.divider()
 
-    st.info(
-        "Enter the admin password to access "
-        "override tools."
-    )
+        # =====================
+        # REMOVE ASSIGNMENT
+        # =====================
 
-st.divider()
+        st.subheader("Remove Instructor Assignment")
 
-st.subheader("Add Instructor Assignment")
+        if assigned:
 
-add_name = st.selectbox(
-    "Instructor",
-    all_instructors,
-    key=f"add_name_{override_day}"
-)
+            remove_name = st.selectbox(
+                "Assigned Instructor",
+                assigned,
+                key=f"remove_name_{override_day}"
+            )
 
-if st.button(
-    "Add Assignment",
-    key=f"add_{override_day}"
-):
+            if st.button(
+                "Remove Assignment",
+                key=f"remove_btn_{override_day}"
+            ):
 
-    # extra protection
-    if not is_admin:
-        st.error(
-            "Admin access required."
-        )
-        st.stop()
+                st.session_state.selected.pop(
+                    f"{override_day}|{remove_name}",
+                    None
+                )
 
-    assignment_key = (
-        f"{override_day}|{add_name}"
-    )
+                st.toast(
+                    f"Removed {remove_name}"
+                )
 
-    if st.session_state.selected.get(
-        assignment_key,
-        False
-    ):
+                st.rerun()
 
-        st.warning(
-            f"{add_name} is already assigned."
-        )
+        else:
 
-    else:
-
-        st.session_state.selected[
-            assignment_key
-        ] = True
-
-        st.toast(
-            f"Added {add_name} "
-            f"to {override_day}"
-        )
-
-        st.rerun()
-
-st.subheader("Remove Instructor Assignment")
-
-remove_name = st.selectbox(
-    "Assigned Instructor",
-    assigned,
-    key=f"remove_{override_day}"
-)
-
-if st.button(
-    "Remove Assignment",
-    key=f"remove_btn_{override_day}"
-):
-
-    st.session_state.selected.pop(
-        f"{override_day}|{remove_name}",
-        None
-    )
-
-    st.toast(
-        f"Removed {remove_name}"
-    )
-
-    st.rerun()
+            st.info(
+                "No instructors assigned on this date."
+            )

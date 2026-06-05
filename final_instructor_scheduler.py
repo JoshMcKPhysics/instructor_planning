@@ -420,10 +420,12 @@ with st.expander("Admin Overrides"):
         )
 
         day_rows = month_df[
-            month_df["Date"].dt.date == day
+            month_df["Date"].dt.date == override_day
         ].copy()
 
         available_names = set(day_rows["Name"])
+        
+        available_names.pop('old_name')
 
         assigned_names = set()
 
@@ -431,7 +433,7 @@ with st.expander("Admin Overrides"):
             if selected:
                 d, instructor = key.split("|", 1)
 
-                if d == str(day):
+                if d == str(override_day):
                     assigned_names.add(instructor)
 
         display_names = available_names | assigned_names

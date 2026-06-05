@@ -467,18 +467,6 @@ if st.button("Refresh"):
     load_from_db()
     st.rerun()
 
-password = st.text_input(
-    "Admin Password",
-    type="password"
-)
-
-st.session_state.is_admin = (
-    password in {
-        ADMIN_PASSWORD,
-        JOSH_PASSWORD
-    }
-)
-
 st.caption(
     "Selected instructors appear first. "
     "Weekly totals are shown on every tile. "

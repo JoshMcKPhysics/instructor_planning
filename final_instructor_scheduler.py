@@ -271,169 +271,169 @@ for selection_key, selected in st.session_state.selected.items():
     if d == str(day):
         assigned_names.add(instructor)
 
-display_names = available_names | assigned_names
+    display_names = available_names | assigned_names
 
-if not display_names:
-    continue
+    if not display_names:
+        continue
 
-rows = []
+    rows = []
 
-for instructor in display_names:
+    for instructor in display_names:
 
-    match = day_rows[
-        day_rows["Name"] == instructor
-    ]
+        match = day_rows[
+            day_rows["Name"] == instructor
+        ]
 
-    if len(match):
+        if len(match):
 
-        rows.append(
-            match.iloc[0].to_dict()
-        )
+            rows.append(
+                match.iloc[0].to_dict()
+            )
 
-    else:
+        else:
 
-        instructor_info = (
-            df[df["Name"] == instructor]
-            .iloc[0]
-            .to_dict()
-        )
+            instructor_info = (
+                df[df["Name"] == instructor]
+                .iloc[0]
+                .to_dict()
+            )
 
-        instructor_info["Date"] = pd.Timestamp(day)
+            instructor_info["Date"] = pd.Timestamp(day)
 
-        rows.append(instructor_info)
+            rows.append(instructor_info)
 
-        display_df = pd.DataFrame(rows)
+            display_df = pd.DataFrame(rows)
 
-        display_df["selected_sort"] = (
-            display_df["Name"]
-            .apply(
-                lambda n:
-                st.session_state.selected.get(
-                    f"{day}|{n}",
-                    False
+            display_df["selected_sort"] = (
+                display_df["Name"]
+                .apply(
+                    lambda n:
+                    st.session_state.selected.get(
+                        f"{day}|{n}",
+                        False
+                    )
                 )
             )
-        )
 
-        display_df = display_df.sort_values(
-            ["selected_sort", "Name"],
-            ascending=[False, True]
-        )
+            display_df = display_df.sort_values(
+                ["selected_sort", "Name"],
+                ascending=[False, True]
+            )
 
-        with st.container(height=DAY_PANEL_HEIGHT):
+            with st.container(height=DAY_PANEL_HEIGHT):
 
-            for _, row in display_df.iterrows():
-                instructor = row["Name"]
-                reliability = int(row["Reliability"])
-                max_hours = float(row["max_hours"])
+                for _, row in display_df.iterrows():
+                    instructor = row["Name"]
+                    reliability = int(row["Reliability"])
+                    max_hours = float(row["max_hours"])
 
-                key = f"{day}|{instructor}"
+                    key = f"{day}|{instructor}"
 
-                is_selected = (
-                    st.session_state.selected.get(
-                        key,
-                        False
-                    )
-                )
-
-                week_hours = weekly_hours(
-                    instructor,
-                    day
-                )
-
-                disabled = (
-                    not is_selected
-                    and (
-                        assigned_today >= 5
-                        or week_hours >= max_hours
-                    )
-                )
-
-                label = (
-                    f"{'✓ ' if is_selected else ''}"
-                    f"{instructor}  "
-                    f"{week_hours:.0f}/{max_hours:.0f}"
-                )
-
-                bg = (
-                    reliability_color(reliability)
-                    if is_selected
-                    else "#d9d9d9"
-                )
-
-                with stylable_container(
-                    key=f"tile_{key}",
-                    css_styles=tile_css(bg)
-                ):
-                    if st.button(
-                        label,
-                        key=f"btn_{key}",
-                        disabled=disabled,
-                        use_container_width=True
-                    ):
-                        toggle(
-                            day,
-                            instructor,
-                            max_hours
+                    is_selected = (
+                        st.session_state.selected.get(
+                            key,
+                            False
                         )
-
-        with st.container(height=DAY_PANEL_HEIGHT):
-
-            for _, row in day_rows.iterrows():
-
-                instructor = row["Name"]
-                reliability = int(row["Reliability"])
-                max_hours = float(row["max_hours"])
-
-                key = f"{day}|{instructor}"
-
-                is_selected = (
-                    st.session_state.selected.get(
-                        key,
-                        False
                     )
-                )
 
-                week_hours = weekly_hours(
-                    instructor,
-                    day
-                )
-
-                disabled = (
-                    not is_selected
-                    and (
-                        assigned_today >= 5
-                        or week_hours >= max_hours
+                    week_hours = weekly_hours(
+                        instructor,
+                        day
                     )
-                )
 
-                label = (
-                    f"{'✓ ' if is_selected else ''}"
-                    f"{instructor}  "
-                    f"{week_hours:.0f}/{max_hours:.0f}"
-                )
-
-                bg = (
-                    reliability_color(reliability)
-                    if is_selected
-                    else "#d9d9d9"
-                )
-
-                with stylable_container(
-                    key=f"tile_{key}",
-                    css_styles=tile_css(bg)
-                ):
-                    if st.button(
-                        label,
-                        key=f"btn_{key}",
-                        disabled=disabled,
-                        use_container_width=True
-                    ):
-                        toggle(
-                            day,
-                            instructor,
-                            max_hours
+                    disabled = (
+                        not is_selected
+                        and (
+                            assigned_today >= 5
+                            or week_hours >= max_hours
                         )
+                    )
+
+                    label = (
+                        f"{'✓ ' if is_selected else ''}"
+                        f"{instructor}  "
+                        f"{week_hours:.0f}/{max_hours:.0f}"
+                    )
+
+                    bg = (
+                        reliability_color(reliability)
+                        if is_selected
+                        else "#d9d9d9"
+                    )
+
+                    with stylable_container(
+                        key=f"tile_{key}",
+                        css_styles=tile_css(bg)
+                    ):
+                        if st.button(
+                            label,
+                            key=f"btn_{key}",
+                            disabled=disabled,
+                            use_container_width=True
+                        ):
+                            toggle(
+                                day,
+                                instructor,
+                                max_hours
+                            )
+
+            with st.container(height=DAY_PANEL_HEIGHT):
+
+                for _, row in day_rows.iterrows():
+
+                    instructor = row["Name"]
+                    reliability = int(row["Reliability"])
+                    max_hours = float(row["max_hours"])
+
+                    key = f"{day}|{instructor}"
+
+                    is_selected = (
+                        st.session_state.selected.get(
+                            key,
+                            False
+                        )
+                    )
+
+                    week_hours = weekly_hours(
+                        instructor,
+                        day
+                    )
+
+                    disabled = (
+                        not is_selected
+                        and (
+                            assigned_today >= 5
+                            or week_hours >= max_hours
+                        )
+                    )
+
+                    label = (
+                        f"{'✓ ' if is_selected else ''}"
+                        f"{instructor}  "
+                        f"{week_hours:.0f}/{max_hours:.0f}"
+                    )
+
+                    bg = (
+                        reliability_color(reliability)
+                        if is_selected
+                        else "#d9d9d9"
+                    )
+
+                    with stylable_container(
+                        key=f"tile_{key}",
+                        css_styles=tile_css(bg)
+                    ):
+                        if st.button(
+                            label,
+                            key=f"btn_{key}",
+                            disabled=disabled,
+                            use_container_width=True
+                        ):
+                            toggle(
+                                day,
+                                instructor,
+                                max_hours
+                            )
 
 
 with st.expander("Assignments"):

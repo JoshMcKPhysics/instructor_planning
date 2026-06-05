@@ -389,17 +389,15 @@ with st.expander("Admin Overrides"):
             True
         )
     ])'''
-
+    
     all_instructors = sorted(
         df["Name"].unique()
     )
 
     assigned = sorted([
         name for name in all_instructors
-        if st.session_state.selected.get(
-            f"{override_day}|{name}",
-            True
-        )
+        if f'{override_day}|{name}'
+        in st.session_state.selected.keys()
     ])
     
 

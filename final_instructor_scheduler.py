@@ -361,7 +361,7 @@ if st.button('Save'):
     else:
         st.warning('Enter the admin password to make changes.')
 
-
+print(st.session_state.selected)
 
 st.caption(
     "Selected instructors appear first. "
@@ -396,7 +396,7 @@ with st.expander("Admin Overrides"):
             True
         )
     ])
-    print(st.session_state.selected)
+    
 
     
 

@@ -370,3 +370,62 @@ st.caption(
     "A selection may exceed max_hours, but once an instructor "
     "is at or above max_hours, further assignments are blocked."
 )
+
+##############################
+with st.expander("Admin Overrides"):
+
+    assigned = sorted([
+        name
+        for name in day_rows["Name"].unique()
+        if st.session_state.selected.get(
+            f"{day}|{name}",
+            False
+        )
+    ])
+
+    all_instructors = sorted(
+        df["Name"].unique()
+    )
+
+    old_name = st.selectbox(
+        "Replace instructor",
+        assigned,
+        key=f"old_{day}"
+    )
+
+    new_name = st.selectbox(
+        "With instructor",
+        all_instructors,
+        key=f"new_{day}"
+    )
+
+    if st.button(
+        "Swap",
+        key=f"swap_{day}"
+    ):
+
+        st.session_state.selected[
+            f"{day}|{old_name}"
+        ] = False
+
+        st.session_state.selected[
+            f"{day}|{new_name}"
+        ] = True
+
+        save_state()
+
+        st.toast(
+            f"Replaced {old_name} with {new_name}"
+        )
+
+        st.rerun()
+
+
+    display_names = set(day_rows["Name"])
+
+    for key, selected in st.session_state.selected.items():
+        if selected:
+            d, instructor = key.split("|", 1)
+
+            if str(day) == d:
+                display_names.add(instructor)

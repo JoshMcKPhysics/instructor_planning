@@ -319,7 +319,6 @@ for week in cal.monthdatescalendar(
                                 max_hours
                             )
 
-print(st.session_state.selected)
 
 with st.expander("Assignments"):
 
@@ -371,6 +370,10 @@ st.caption(
     "Weekly totals are displayed on every card in the week. "
     "A selection may exceed max_hours, but once an instructor "
     "is at or above max_hours, further assignments are blocked."
+)
+
+st.caption(
+    str(st.session_state.selected)
 )
 
 ##############################

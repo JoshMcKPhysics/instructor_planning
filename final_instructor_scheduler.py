@@ -4,14 +4,12 @@ import json
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 import streamlit as st
 from supabase import create_client
-
-
 from streamlit_extras.stylable_container import stylable_container
 
 # ---------- CONFIG ----------
+
 supabase = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_KEY"]
@@ -21,11 +19,8 @@ ADMIN_PASSWORD = st.secrets["ADMIN_PASSWORD"]
 JOSH_PASSWORD = st.secrets["JOSH_PASSWORD"]
 
 BASE_DIR = Path(__file__).parent
-
-STATE_FILE = BASE_DIR / "schedule_selections.json"
 DATA_FILE = BASE_DIR / "instructor_planning.pkl"
 
-VISIBLE_INSTRUCTORS = 5
 DAY_PANEL_HEIGHT = 185
 
 # ---------- APP ----------
@@ -40,68 +35,63 @@ def load_data():
 
 df = load_data()
 
-def load_state():
-    p = Path(STATE_FILE)
-    if p.exists():
-        return json.loads(p.read_text())
-    return {}
-
-def save_state():
-    Path(STATE_FILE).write_text(json.dumps(st.session_state.selected))
+# ---------- STATE ----------
 
 def load_from_db():
-    st.session_state.selected = (
-        json.loads(
-            supabase
-            .table("schedule_state")
-            .select("*")
-            .execute()
-            .data[0]['selected']
-        )
+    rows = (
+        supabase
+        .table("schedule_state")
+        .select("*")
+        .execute()
+        .data
     )
+
+    if rows:
+        st.session_state.selected = json.loads(
+            rows[0]["selected"]
+        )
+    else:
+        st.session_state.selected = {}
 
 def save_to_db():
     (
         supabase
-        .table('schedule_state')
+        .table("schedule_state")
         .upsert({
-            'id': 'current_state',
-            'selected': json.dumps(st.session_state.selected)
+            "id": "current_state",
+            "selected": json.dumps(
+                st.session_state.selected
+            )
         })
         .execute()
     )
 
-
-#if "selected" not in st.session_state:
-if not hasattr(st.session_state, 'selected'):
-    #st.session_state.selected = load_state()
+if "selected" not in st.session_state:
     load_from_db()
 
 # ---------- RULES ----------
-# test
+
 def assignment_hours(dt):
     dt = pd.Timestamp(dt)
-    
-    # Mon-Thu = 4 hours
+
     if dt.dayofweek < 4:
         return 4
 
-    # Sat-Sun = 3 hours
     if dt.dayofweek >= 5:
         return 3
 
-    # Friday = 0
     return 0
 
 def week_key(dt):
     iso = pd.Timestamp(dt).isocalendar()
-    return f"{iso.year}-{iso.week + (iso.weekday == 7)}"
+    return f"{iso.year}-{iso.week}"
 
 def weekly_hours(name, day):
     wk = week_key(day)
     total = 0
 
     for key, selected in st.session_state.selected.items():
+
         if not selected:
             continue
 
@@ -111,37 +101,36 @@ def weekly_hours(name, day):
             continue
 
         if week_key(pd.to_datetime(d)) == wk:
-            total += assignment_hours(pd.to_datetime(d))
+            total += assignment_hours(d)
 
     return total
 
 def selected_count(day):
     return sum(
         1
-        for key, selected in st.session_state.selected.items()
-        if selected and key.startswith(str(day) + "|")
+        for k, v in st.session_state.selected.items()
+        if v and k.startswith(f"{day}|")
     )
 
-def reliability_color(reliability):
+def reliability_color(r):
     return {
-        3: "#ff9800",  # orange
-        4: "#ffeb3b",  # yellow
-        5: "#8bc34a",  # green
-    }.get(int(reliability), "#d3d3d3")
+        3: "#ff9800",
+        4: "#ffeb3b",
+        5: "#8bc34a"
+    }.get(int(r), "#d9d9d9")
 
 def tile_css(bg):
     return f"""
     button {{
-        background: {bg} !important;
-        color: black !important;
-        border: 1px solid #999 !important;
-        border-radius: 6px !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        padding: 2px 6px !important;
-        font-size: 10px !important;
-        text-align: left !important;
-        margin-bottom: 2px !important;
+        background:{bg} !important;
+        color:black !important;
+        border:1px solid #999 !important;
+        border-radius:6px !important;
+        min-height:28px !important;
+        height:28px !important;
+        font-size:10px !important;
+        padding:2px 6px !important;
+        text-align:left !important;
     }}
     """
 
@@ -149,22 +138,12 @@ def tile_css(bg):
 
 def toggle(day, instructor, max_hours):
 
-    #if not is_admin:
-    #    return
-
     key = f"{day}|{instructor}"
 
-    currently_selected = st.session_state.selected.get(
-        key,
-        False
-    )
-
-    if currently_selected:
+    if st.session_state.selected.get(key, False):
         st.session_state.selected[key] = False
-        save_state()
         st.rerun()
 
-    # 5 instructors max per day
     if selected_count(day) >= 5:
         return
 
@@ -173,16 +152,14 @@ def toggle(day, instructor, max_hours):
         day
     )
 
-    # allow crossing max once
-    if current_hours >= max_hours:
+    # allow crossing once (e.g. 8/7)
+    if current_hours > max_hours:
         return
 
     st.session_state.selected[key] = True
-
-    save_state()
     st.rerun()
 
-# ---------- MONTH PICKER ----------
+# ---------- MONTH ----------
 
 months = sorted(
     df["Date"].dt.to_period("M").unique()
@@ -206,11 +183,11 @@ st.title(
 
 headers = st.columns(7)
 
-for c, day_name in zip(
+for c, d in zip(
     headers,
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
 ):
-    c.markdown(f"**{day_name}**")
+    c.markdown(f"**{d}**")
 
 cal = calendar.Calendar(firstweekday=6)
 
@@ -234,82 +211,81 @@ for week in cal.monthdatescalendar(
             assigned_today = selected_count(day)
 
             st.markdown(
-                f"**{day.day}**  •  "
-                f"**{assigned_today}/5**"
+                f"**{day.day}** • **{assigned_today}/5**"
             )
 
-            for col, day in zip(cols, week):
+            day_rows = month_df[
+                month_df["Date"].dt.date == day
+            ].copy()
 
-                with col:
+            available_names = set(
+                day_rows["Name"]
+            )
 
-                    if day.month != month.month:
-                        st.empty()
-                        continue
+            assigned_names = set()
 
-                    assigned_today = selected_count(day)
+            for selection_key, selected in (
+                st.session_state.selected.items()
+            ):
 
-                    st.markdown(
-                        f"**{day.day}**  •  "
-                        f"**{assigned_today}/5**"
+                if not selected:
+                    continue
+
+                d, instructor = (
+                    selection_key.split("|", 1)
+                )
+
+                if d == str(day):
+                    assigned_names.add(
+                        instructor
                     )
 
-                    day_rows = month_df[
-    month_df["Date"].dt.date == day
-].copy()
-
-available_names = set(day_rows["Name"]) if len(day_rows) else set()
-
-assigned_names = set()
-
-for selection_key, selected in st.session_state.selected.items():
-
-    if not selected:
-        continue
-
-    d, instructor = selection_key.split("|", 1)
-
-    if d == str(day):
-        assigned_names.add(instructor)
-
-    display_names = available_names | assigned_names
-
-    st.write(
-        day,             
-        len(available_names),
-        len(assigned_names),
-        len(display_names           )
-    )   
-
-    if not display_names:
-        continue
-
-    rows = []
-
-    for instructor in display_names:
-
-        match = day_rows[
-            day_rows["Name"] == instructor
-        ]
-
-        if len(match):
-
-            rows.append(
-                match.iloc[0].to_dict()
+            display_names = (
+                available_names |
+                assigned_names
             )
 
-        else:
+            if not display_names:
+                continue
 
-            instructor_info = (
-                df[df["Name"] == instructor]
-                .iloc[0]
-                .to_dict()
-            )
+            rows = []
 
-            instructor_info["Date"] = pd.Timestamp(day)
+            for instructor in display_names:
 
-            rows.append(instructor_info)
+                match = day_rows[
+                    day_rows["Name"] == instructor
+                ]
+
+                if len(match):
+
+                    rows.append(
+                        match.iloc[0].to_dict()
+                    )
+
+                else:
+
+                    master = (
+                        df[
+                            df["Name"] == instructor
+                        ]
+                        .drop_duplicates("Name")
+                    )
+
+                    if len(master):
+
+                        info = (
+                            master.iloc[0]
+                            .to_dict()
+                        )
+
+                        info["Date"] = pd.Timestamp(day)
+
+                        rows.append(info)
 
             display_df = pd.DataFrame(rows)
+
+            if len(display_df) == 0:
+                continue
 
             display_df["selected_sort"] = (
                 display_df["Name"]
@@ -327,16 +303,25 @@ for selection_key, selected in st.session_state.selected.items():
                 ascending=[False, True]
             )
 
-            with st.container(height=DAY_PANEL_HEIGHT):
+            with st.container(
+                height=DAY_PANEL_HEIGHT
+            ):
 
                 for _, row in display_df.iterrows():
+
                     instructor = row["Name"]
-                    reliability = int(row["Reliability"])
-                    max_hours = float(row["max_hours"])
+                    reliability = int(
+                        row["Reliability"]
+                    )
+                    max_hours = float(
+                        row["max_hours"]
+                    )
 
-                    key = f"{day}|{instructor}"
+                    key = (
+                        f"{day}|{instructor}"
+                    )
 
-                    is_selected = (
+                    selected = (
                         st.session_state.selected.get(
                             key,
                             False
@@ -349,22 +334,25 @@ for selection_key, selected in st.session_state.selected.items():
                     )
 
                     disabled = (
-                        not is_selected
+                        not selected
                         and (
                             assigned_today >= 5
-                            or week_hours >= max_hours
+                            or week_hours > max_hours
                         )
                     )
 
                     label = (
-                        f"{'✓ ' if is_selected else ''}"
-                        f"{instructor}  "
-                        f"{week_hours:.0f}/{max_hours:.0f}"
+                        f"{'✓ ' if selected else ''}"
+                        f"{instructor} "
+                        f"{week_hours:.0f}/"
+                        f"{max_hours:.0f}"
                     )
 
                     bg = (
-                        reliability_color(reliability)
-                        if is_selected
+                        reliability_color(
+                            reliability
+                        )
+                        if selected
                         else "#d9d9d9"
                     )
 
@@ -372,6 +360,7 @@ for selection_key, selected in st.session_state.selected.items():
                         key=f"tile_{key}",
                         css_styles=tile_css(bg)
                     ):
+
                         if st.button(
                             label,
                             key=f"btn_{key}",
@@ -384,90 +373,40 @@ for selection_key, selected in st.session_state.selected.items():
                                 max_hours
                             )
 
-            with st.container(height=DAY_PANEL_HEIGHT):
-
-                for _, row in day_rows.iterrows():
-
-                    instructor = row["Name"]
-                    reliability = int(row["Reliability"])
-                    max_hours = float(row["max_hours"])
-
-                    key = f"{day}|{instructor}"
-
-                    is_selected = (
-                        st.session_state.selected.get(
-                            key,
-                            False
-                        )
-                    )
-
-                    week_hours = weekly_hours(
-                        instructor,
-                        day
-                    )
-
-                    disabled = (
-                        not is_selected
-                        and (
-                            assigned_today >= 5
-                            or week_hours >= max_hours
-                        )
-                    )
-
-                    label = (
-                        f"{'✓ ' if is_selected else ''}"
-                        f"{instructor}  "
-                        f"{week_hours:.0f}/{max_hours:.0f}"
-                    )
-
-                    bg = (
-                        reliability_color(reliability)
-                        if is_selected
-                        else "#d9d9d9"
-                    )
-
-                    with stylable_container(
-                        key=f"tile_{key}",
-                        css_styles=tile_css(bg)
-                    ):
-                        if st.button(
-                            label,
-                            key=f"btn_{key}",
-                            disabled=disabled,
-                            use_container_width=True
-                        ):
-                            toggle(
-                                day,
-                                instructor,
-                                max_hours
-                            )
-
+# ---------- ASSIGNMENTS ----------
 
 with st.expander("Assignments"):
 
-    records = []
+    rows = []
 
     for key, selected in (
         st.session_state.selected.items()
     ):
-        if selected:
-            d, instructor = key.split("|", 1)
 
-            records.append({
+        if selected:
+
+            d, instructor = (
+                key.split("|", 1)
+            )
+
+            rows.append({
                 "Date": d,
                 "Instructor": instructor
             })
 
-    if records:
+    if rows:
+
         st.dataframe(
-            pd.DataFrame(records)
+            pd.DataFrame(rows)
             .sort_values(
                 ["Date", "Instructor"]
             ),
             use_container_width=True
         )
 
-if st.button('Refresh'):
+# ---------- SAVE ----------
+
+if st.button("Refresh"):
     load_from_db()
     st.rerun()
 
@@ -476,160 +415,77 @@ password = st.text_input(
     type="password"
 )
 
-is_admin = password in {ADMIN_PASSWORD, JOSH_PASSWORD}
+is_admin = password in {
+    ADMIN_PASSWORD,
+    JOSH_PASSWORD
+}
 
-if st.button('Save'):
+if st.button("Save"):
+
     if is_admin:
+
         save_to_db()
-        st.toast('Saved')
+        st.toast("Saved")
+
     else:
-        st.warning('Enter the admin password to make changes.')
 
-
+        st.warning(
+            "Enter admin password."
+        )
 
 st.caption(
     "Selected instructors appear first. "
-    "Panels show ~5 instructors before scrolling. "
-    "Weekly totals are displayed on every card in the week. "
-    "A selection may exceed max_hours, but once an instructor "
-    "is at or above max_hours, further assignments are blocked."
+    "Weekly totals are shown on every tile. "
+    "One assignment beyond max_hours is allowed."
 )
 
+# ---------- ADMIN OVERRIDES ----------
 
-##############################
 with st.expander("Admin Overrides"):
 
     override_day = st.date_input("Date")
-    
+
     all_instructors = sorted(
         df["Name"].unique()
     )
 
     assigned = sorted([
-        name for name in all_instructors
-        if f'{override_day}|{name}'
-        in st.session_state.selected.keys()
+        name
+        for name in all_instructors
+        if st.session_state.selected.get(
+            f"{override_day}|{name}",
+            False
+        )
     ])
 
-    old_name = st.selectbox(
-        "Replace instructor",
-        assigned,
-        key=f"old_{override_day}"
-    )
+    if assigned:
 
-    new_name = st.selectbox(
-        "With instructor",
-        all_instructors,
-        key=f"new_{override_day}"
-    )
-
-    if st.button(
-        "Swap",
-        key=f"swap_{override_day}"
-    ):
-
-        st.session_state.selected.pop(
-            f"{override_day}|{old_name}",
-            None
+        old_name = st.selectbox(
+            "Replace instructor",
+            assigned
         )
 
-        st.session_state.selected[
-            f"{override_day}|{new_name}"
-        ] = True
-
-        save_state()
-
-        st.toast(
-            f"Replaced {old_name} with {new_name}"
+        new_name = st.selectbox(
+            "With instructor",
+            all_instructors
         )
 
-        st.rerun()
+        if st.button(
+            "Swap",
+            key=f"swap_{override_day}"
+        ):
 
-        '''day_rows = month_df[
-            month_df["Date"].dt.date == override_day
-        ].copy()
-
-        available_names = set(day_rows["Name"]) - {old_name}
-        
-        assigned_names = set()
-
-        for key, selected in st.session_state.selected.items():
-            if selected:
-                d, instructor = key.split("|", 1)
-
-                if d == str(override_day):
-                    assigned_names.add(instructor)
-
-        display_names = available_names | assigned_names
-
-        for instructor in sorted(display_names):
-
-            info = (
-                df[df["Name"] == instructor]
-                .iloc[0]
+            st.session_state.selected.pop(
+                f"{override_day}|{old_name}",
+                None
             )
 
-            render_tile(
-                instructor,
-                info["Reliability"],
-                info["max_hours"]
+            st.session_state.selected[
+                f"{override_day}|{new_name}"
+            ] = True
+
+            st.toast(
+                f"Replaced {old_name} with {new_name}"
             )
 
-        swap_row = pd.DataFrame(
-            dict(
-                df.loc[df['Name'] == new_name].iloc[0]
-            ),
-            index=range(1)
-        )
-
-        swap_row['Date'] = pd.Timestamp(override_day)
-
-        weekday_map = {
-            0: 'M',
-            1: 'T',
-            2: 'W',
-            3: 'Th',
-            4: 'F',
-            5: 'Sat',
-            6: 'Sun'
-        }
-
-        swap_row['Weekday' ]= weekday_map[pd.Timestamp(override_day).weekday()]
-
-        df = pd.concat(
-            [df, swap_row],
-            ignore_index=True
-        )
-
-        month_df = pd.concat(
-            [month_df, swap_row],
-            ignore_index=True
-        )
-
-        rows = []
-
-        for name in sorted(display_names):
-
-            existing = day_rows[day_rows["Name"] == name]
-
-            if len(existing):
-                rows.append(existing.iloc[0].to_dict())
-
-            else:
-                # instructor added via override
-                instructor_info = (
-                    df[df["Name"] == name]
-                    .iloc[0]
-                    .to_dict()
-                )
-
-                instructor_info["Date"] = pd.Timestamp(override_day)
-
-                rows.append(instructor_info)
-
-        display_df = pd.DataFrame(rows)'''
-
-        #st.rerun()
-
-
-    
+            st.rerun()

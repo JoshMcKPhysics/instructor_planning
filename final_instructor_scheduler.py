@@ -459,10 +459,10 @@ with st.expander("Admin Overrides"):
 
         swap_row['Weekday' ]= weekday_map[pd.Timestamp(override_day).weekday()]
 
-        pd.concat(
+        pd.concat([
             df,
             swap_row
-        )
+        ])
 
         rows = []
 

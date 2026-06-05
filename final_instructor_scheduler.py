@@ -377,15 +377,6 @@ st.caption(
 with st.expander("Admin Overrides"):
 
     override_day = st.date_input("Date")
-
-    '''assigned = sorted([
-        name
-        for name in day_rows["Name"].unique()
-        if st.session_state.selected.get(
-            f"{override_day}|{name}",
-            True
-        )
-    ])'''
     
     all_instructors = sorted(
         df["Name"].unique()
@@ -428,14 +419,45 @@ with st.expander("Admin Overrides"):
             f"Replaced {old_name} with {new_name}"
         )
 
-        display_names = set(day_rows["Name"])
+        day_rows = month_df[
+            month_df["Date"].dt.date == day
+        ].copy()
+
+        available_names = set(day_rows["Name"])
+
+        assigned_names = set()
 
         for key, selected in st.session_state.selected.items():
             if selected:
                 d, instructor = key.split("|", 1)
 
-                if str(day) == d:
-                    display_names.add(instructor)
+                if d == str(day):
+                    assigned_names.add(instructor)
+
+        display_names = available_names | assigned_names
+
+        rows = []
+
+        for name in sorted(display_names):
+
+            existing = day_rows[day_rows["Name"] == name]
+
+            if len(existing):
+                rows.append(existing.iloc[0].to_dict())
+
+            else:
+                # instructor added via override
+                instructor_info = (
+                    df[df["Name"] == name]
+                    .iloc[0]
+                    .to_dict()
+                )
+
+                instructor_info["Date"] = pd.Timestamp(day)
+
+                rows.append(instructor_info)
+
+        display_df = pd.DataFrame(rows)
 
         st.rerun()
 

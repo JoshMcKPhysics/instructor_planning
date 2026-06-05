@@ -376,18 +376,29 @@ with st.expander("Admin Overrides"):
 
     override_day = st.date_input("Date")
 
-    assigned = sorted([
+    '''assigned = sorted([
         name
         for name in day_rows["Name"].unique()
         if st.session_state.selected.get(
             f"{override_day}|{name}",
             True
         )
-    ])
+    ])'''
 
     all_instructors = sorted(
         df["Name"].unique()
     )
+
+    assigned = sorted([
+        name
+        for name in all_instructors
+        if st.session_state.selected.get(
+            f"{override_day}|{name}",
+            True
+        )
+    ])
+
+    
 
     old_name = st.selectbox(
         "Replace instructor",

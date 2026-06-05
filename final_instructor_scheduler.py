@@ -142,7 +142,9 @@ def toggle(day, instructor, max_hours):
 
     if st.session_state.selected.get(key, False):
         st.session_state.selected[key] = False
+        save_to_db()
         st.rerun()
+        
 
     if selected_count(day) >= 5:
         return
@@ -157,8 +159,9 @@ def toggle(day, instructor, max_hours):
         return
 
     st.session_state.selected[key] = True
+    save_to_db()
     st.rerun()
-
+    
 # ---------- MONTH ----------
 
 months = sorted(
@@ -420,19 +423,6 @@ is_admin = password in {
     JOSH_PASSWORD
 }
 
-if st.button("Save"):
-
-    if is_admin:
-
-        save_to_db()
-        st.toast("Saved")
-
-    else:
-
-        st.warning(
-            "Enter admin password."
-        )
-
 st.caption(
     "Selected instructors appear first. "
     "Weekly totals are shown on every tile. "
@@ -463,10 +453,66 @@ if is_admin:
         ])
 
         # =====================
-        # ADD ASSIGNMENT
+        # SWAP
         # =====================
 
-        st.subheader("Add Instructor Assignment")
+        st.subheader(
+            "Swap Instructor"
+        )
+
+        if assigned:
+
+            old_name = st.selectbox(
+                "Replace",
+                assigned,
+                key=f"swap_old_{override_day}"
+            )
+
+            new_name = st.selectbox(
+                "With",
+                all_instructors,
+                key=f"swap_new_{override_day}"
+            )
+
+            if st.button(
+                "Swap",
+                key=f"swap_btn_{override_day}"
+            ):
+
+                st.session_state.selected.pop(
+                    f"{override_day}|{old_name}",
+                    None
+                )
+
+                st.session_state.selected[
+                    f"{override_day}|{new_name}"
+                ] = True
+
+                save_to_db()
+
+                st.toast(
+                    f"Replaced {old_name} "
+                    f"with {new_name}"
+                )
+
+                st.rerun()
+
+        else:
+
+            st.info(
+                "No instructors assigned "
+                "on this date."
+            )
+
+        st.divider()
+
+        # =====================
+        # ADD
+        # =====================
+
+        st.subheader(
+            "Add Instructor Assignment"
+        )
 
         add_name = st.selectbox(
             "Instructor",
@@ -476,27 +522,23 @@ if is_admin:
 
         if st.button(
             "Add Assignment",
-            key=f"add_{override_day}"
+            key=f"add_btn_{override_day}"
         ):
 
             assignment_key = (
                 f"{override_day}|{add_name}"
             )
 
-            if st.session_state.selected.get(
+            if not st.session_state.selected.get(
                 assignment_key,
                 False
             ):
 
-                st.warning(
-                    f"{add_name} is already assigned."
-                )
-
-            else:
-
                 st.session_state.selected[
                     assignment_key
                 ] = True
+
+                save_to_db()
 
                 st.toast(
                     f"Added {add_name}"
@@ -507,10 +549,12 @@ if is_admin:
         st.divider()
 
         # =====================
-        # REMOVE ASSIGNMENT
+        # REMOVE
         # =====================
 
-        st.subheader("Remove Instructor Assignment")
+        st.subheader(
+            "Remove Instructor Assignment"
+        )
 
         if assigned:
 
@@ -530,14 +574,10 @@ if is_admin:
                     None
                 )
 
+                save_to_db()
+
                 st.toast(
                     f"Removed {remove_name}"
                 )
 
                 st.rerun()
-
-        else:
-
-            st.info(
-                "No instructors assigned on this date."
-            )

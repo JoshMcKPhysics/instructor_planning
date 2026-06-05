@@ -516,7 +516,7 @@ if is_admin:
 
         add_name = st.selectbox(
             "Instructor",
-            all_instructors,
+            all_instructors - assigned,
             key=f"add_name_{override_day}"
         )
 

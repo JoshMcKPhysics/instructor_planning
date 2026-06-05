@@ -438,6 +438,32 @@ with st.expander("Admin Overrides"):
 
         display_names = available_names | assigned_names
 
+        swap_row = pd.DataFrame(
+            dict(
+                df.loc[df['Name'] == new_name].iloc[0]
+            ),
+            index=range(1)
+        )
+
+        swap_row['Date'] = override_day
+
+        weekday_map = {
+            0: 'M',
+            1: 'T',
+            2: 'W',
+            3: 'Th',
+            4: 'F',
+            5: 'Sat',
+            6: 'Sun'
+        }
+
+        swap_row['Weekday' ]= weekday_map[override_day.dt.weekday]
+
+        pd.concat(
+            df,
+            swap_row
+        )
+
         rows = []
 
         for name in sorted(display_names):

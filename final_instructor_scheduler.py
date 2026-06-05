@@ -457,7 +457,7 @@ with st.expander("Admin Overrides"):
             6: 'Sun'
         }
 
-        swap_row['Weekday' ]= weekday_map[override_day.dt.weekday]
+        swap_row['Weekday' ]= weekday_map[pd.Timestamp(override_day).weekday()]
 
         pd.concat(
             df,

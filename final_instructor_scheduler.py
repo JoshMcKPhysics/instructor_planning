@@ -445,7 +445,7 @@ with st.expander("Admin Overrides"):
             index=range(1)
         )
 
-        swap_row['Date'] = override_day
+        swap_row['Date'] = pd.Timestamp(override_day)
 
         weekday_map = {
             0: 'M',

@@ -273,6 +273,13 @@ for selection_key, selected in st.session_state.selected.items():
 
     display_names = available_names | assigned_names
 
+    st.write(
+        day,             
+        len(available_names),
+        len(assigned_names),
+        len(display_names           )
+    )   
+
     if not display_names:
         continue
 

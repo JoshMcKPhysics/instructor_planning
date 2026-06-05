@@ -514,3 +514,75 @@ else:
         "Enter the admin password to access "
         "override tools."
     )
+
+st.divider()
+
+st.subheader("Add Instructor Assignment")
+
+add_name = st.selectbox(
+    "Instructor",
+    all_instructors,
+    key=f"add_name_{override_day}"
+)
+
+if st.button(
+    "Add Assignment",
+    key=f"add_{override_day}"
+):
+
+    # extra protection
+    if not is_admin:
+        st.error(
+            "Admin access required."
+        )
+        st.stop()
+
+    assignment_key = (
+        f"{override_day}|{add_name}"
+    )
+
+    if st.session_state.selected.get(
+        assignment_key,
+        False
+    ):
+
+        st.warning(
+            f"{add_name} is already assigned."
+        )
+
+    else:
+
+        st.session_state.selected[
+            assignment_key
+        ] = True
+
+        st.toast(
+            f"Added {add_name} "
+            f"to {override_day}"
+        )
+
+        st.rerun()
+
+st.subheader("Remove Instructor Assignment")
+
+remove_name = st.selectbox(
+    "Assigned Instructor",
+    assigned,
+    key=f"remove_{override_day}"
+)
+
+if st.button(
+    "Remove Assignment",
+    key=f"remove_btn_{override_day}"
+):
+
+    st.session_state.selected.pop(
+        f"{override_day}|{remove_name}",
+        None
+    )
+
+    st.toast(
+        f"Removed {remove_name}"
+    )
+
+    st.rerun()

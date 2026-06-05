@@ -374,12 +374,14 @@ st.caption(
 ##############################
 with st.expander("Admin Overrides"):
 
+    override_day = st.date_input("Date"
+                                 )
     assigned = sorted([
         name
         for name in day_rows["Name"].unique()
         if st.session_state.selected.get(
             f"{day}|{name}",
-            False
+            True
         )
     ])
 

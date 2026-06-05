@@ -238,6 +238,21 @@ for week in cal.monthdatescalendar(
                 f"**{assigned_today}/5**"
             )
 
+            for col, day in zip(cols, week):
+
+        with col:
+
+            if day.month != month.month:
+                st.empty()
+                continue
+
+            assigned_today = selected_count(day)
+
+            st.markdown(
+                f"**{day.day}**  •  "
+                f"**{assigned_today}/5**"
+            )
+
             day_rows = month_df[
                 month_df["Date"].dt.date == day
             ].copy()
@@ -260,6 +275,63 @@ for week in cal.monthdatescalendar(
                 ["selected_sort", "Name"],
                 ascending=[False, True]
             )
+
+            with st.container(height=DAY_PANEL_HEIGHT):
+
+                for _, row in display_df.iterrows():
+                    instructor = row["Name"]
+                    reliability = int(row["Reliability"])
+                    max_hours = float(row["max_hours"])
+
+                    key = f"{day}|{instructor}"
+
+                    is_selected = (
+                        st.session_state.selected.get(
+                            key,
+                            False
+                        )
+                    )
+
+                    week_hours = weekly_hours(
+                        instructor,
+                        day
+                    )
+
+                    disabled = (
+                        not is_selected
+                        and (
+                            assigned_today >= 5
+                            or week_hours >= max_hours
+                        )
+                    )
+
+                    label = (
+                        f"{'✓ ' if is_selected else ''}"
+                        f"{instructor}  "
+                        f"{week_hours:.0f}/{max_hours:.0f}"
+                    )
+
+                    bg = (
+                        reliability_color(reliability)
+                        if is_selected
+                        else "#d9d9d9"
+                    )
+
+                    with stylable_container(
+                        key=f"tile_{key}",
+                        css_styles=tile_css(bg)
+                    ):
+                        if st.button(
+                            label,
+                            key=f"btn_{key}",
+                            disabled=disabled,
+                            use_container_width=True
+                        ):
+                            toggle(
+                                day,
+                                instructor,
+                                max_hours
+                            )
 
             with st.container(height=DAY_PANEL_HEIGHT):
 
@@ -406,7 +478,8 @@ with st.expander("Admin Overrides"):
     ):
 
         st.session_state.selected.pop(
-            f"{override_day}|{old_name}"
+            f"{override_day}|{old_name}",
+            None
         )
 
         st.session_state.selected[
@@ -419,14 +492,14 @@ with st.expander("Admin Overrides"):
             f"Replaced {old_name} with {new_name}"
         )
 
-        day_rows = month_df[
+        st.rerun()
+
+        '''day_rows = month_df[
             month_df["Date"].dt.date == override_day
         ].copy()
 
-        available_names = set(day_rows["Name"])
+        available_names = set(day_rows["Name"]) - {old_name}
         
-        available_names - {old_name}
-
         assigned_names = set()
 
         for key, selected in st.session_state.selected.items():
@@ -437,6 +510,19 @@ with st.expander("Admin Overrides"):
                     assigned_names.add(instructor)
 
         display_names = available_names | assigned_names
+
+        for instructor in sorted(display_names):
+
+            info = (
+                df[df["Name"] == instructor]
+                .iloc[0]
+            )
+
+            render_tile(
+                instructor,
+                info["Reliability"],
+                info["max_hours"]
+            )
 
         swap_row = pd.DataFrame(
             dict(
@@ -459,10 +545,15 @@ with st.expander("Admin Overrides"):
 
         swap_row['Weekday' ]= weekday_map[pd.Timestamp(override_day).weekday()]
 
-        pd.concat([
-            df,
-            swap_row
-        ])
+        df = pd.concat(
+            [df, swap_row],
+            ignore_index=True
+        )
+
+        month_df = pd.concat(
+            [month_df, swap_row],
+            ignore_index=True
+        )
 
         rows = []
 
@@ -481,13 +572,13 @@ with st.expander("Admin Overrides"):
                     .to_dict()
                 )
 
-                instructor_info["Date"] = pd.Timestamp(day)
+                instructor_info["Date"] = pd.Timestamp(override_day)
 
                 rows.append(instructor_info)
 
-        display_df = pd.DataFrame(rows)
+        display_df = pd.DataFrame(rows)'''
 
-        st.rerun()
+        #st.rerun()
 
 
     

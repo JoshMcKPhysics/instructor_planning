@@ -474,7 +474,7 @@ st.caption(
 
 # ---------- ADMIN OVERRIDES ----------
 
-if is_admin:
+if st.session_state.is_admin:
 
     with st.expander("Admin Overrides"):
 

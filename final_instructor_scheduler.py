@@ -72,6 +72,19 @@ def save_to_db():
 if "selected" not in st.session_state:
     load_from_db()
 
+
+password = st.text_input(
+    "Admin Password",
+    type="password"
+)
+
+st.session_state.is_admin = (
+    password in {
+        ADMIN_PASSWORD,
+        JOSH_PASSWORD
+    }
+)
+
 # ---------- RULES ----------
 
 def assignment_hours(dt):

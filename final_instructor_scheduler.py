@@ -37,6 +37,9 @@ df = load_data()
 
 # ---------- STATE ----------
 
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+
 def load_from_db():
     rows = (
         supabase
@@ -138,13 +141,35 @@ def tile_css(bg):
 
 def toggle(day, instructor, max_hours):
 
+    # Admins only
+    if not st.session_state.is_admin:
+        st.warning(
+            "Admin password required to modify assignments."
+        )
+        return
+
     key = f"{day}|{instructor}"
 
-    if st.session_state.selected.get(key, False):
+    currently_selected = st.session_state.selected.get(
+        key,
+        False
+    )
+
+    # --------------------
+    # Unassign
+    # --------------------
+
+    if currently_selected:
+
         st.session_state.selected[key] = False
+
         save_to_db()
+
         st.rerun()
-        
+
+    # --------------------
+    # Daily limit
+    # --------------------
 
     if selected_count(day) >= 5:
         return
@@ -154,12 +179,25 @@ def toggle(day, instructor, max_hours):
         day
     )
 
-    # allow crossing once (e.g. 8/7)
+    # --------------------
+    # Allow one assignment
+    # beyond max_hours
+    # Example:
+    # 4/7 -> 8/7 allowed
+    # 8/7 -> next blocked
+    # --------------------
+
     if current_hours > max_hours:
         return
 
+    # --------------------
+    # Assign
+    # --------------------
+
     st.session_state.selected[key] = True
+
     save_to_db()
+
     st.rerun()
     
 # ---------- MONTH ----------
@@ -337,12 +375,15 @@ for week in cal.monthdatescalendar(
                     )
 
                     disabled = (
-                        not selected
-                        and (
-                            assigned_today >= 5
-                            or week_hours > max_hours
+                        (not st.session_state.is_admin)
+                        or (
+                            not selected
+                            and (
+                                assigned_today >= 5
+                                or week_hours > max_hours
+                            )
                         )
-                    )
+                        )
 
                     label = (
                         f"{'✓ ' if selected else ''}"
@@ -418,10 +459,12 @@ password = st.text_input(
     type="password"
 )
 
-is_admin = password in {
-    ADMIN_PASSWORD,
-    JOSH_PASSWORD
-}
+st.session_state.is_admin = (
+    password in {
+        ADMIN_PASSWORD,
+        JOSH_PASSWORD
+    }
+)
 
 st.caption(
     "Selected instructors appear first. "

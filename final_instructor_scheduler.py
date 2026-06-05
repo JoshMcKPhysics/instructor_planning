@@ -319,6 +319,8 @@ for week in cal.monthdatescalendar(
                                 max_hours
                             )
 
+print(st.session_state.selected)
+
 with st.expander("Assignments"):
 
     records = []
@@ -361,7 +363,7 @@ if st.button('Save'):
     else:
         st.warning('Enter the admin password to make changes.')
 
-print(st.session_state.selected)
+
 
 st.caption(
     "Selected instructors appear first. "
